@@ -21,7 +21,7 @@ target_timeout = 30                   # the response time should be less than ta
                                     # then we consider this is a valid proxy
 
 
-dbpassword='localhost'
+dbpassword='smart247'
 # items in q is a list: ip, port, protocol, country
 qproxy = queue.Queue()
 qout = queue.Queue()
@@ -250,8 +250,8 @@ def createProxyListTable():
             "ALTER TABLE `mypythondb`.`freeproxy` ADD UNIQUE INDEX `index1` (`ip` ASC, `port` ASC)",
             "alter table `mypythondb`.`freeproxy` add column `active` boolean default false",
             "alter table `mypythondb`.`freeproxy` add column `speed` int default 0",
-            "alter table `mypythondb`.`freeproxy` add column `time_added` timestamp",
-            "alter table `mypythondb`.`freeproxy` add column `time_verified` timestamp"]
+            "alter table `mypythondb`.`freeproxy` add column `time_added` timestamp default '0000-00-00 00:00:00'",
+            "alter table `mypythondb`.`freeproxy` add column `time_verified` timestamp default '0000-00-00 00:00:00'"]
 
     for query in querys:
         try:
@@ -299,4 +299,9 @@ if __name__ == '__main__':
 
     cursor.close()
     cnx.close()
-    quit(0)
+
+    alive = 0
+    for thread in threads:
+        if thread.is_alive():
+            alive+= 1
+    quit(alive)
