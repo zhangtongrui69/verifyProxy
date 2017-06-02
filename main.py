@@ -21,7 +21,7 @@ target_timeout = 30                   # the response time should be less than ta
                                     # then we consider this is a valid proxy
 
 
-dbpassword='smart247'
+dbpassword='localhost'
 # items in q is a list: ip, port, protocol, country
 qproxy = queue.Queue()
 qout = queue.Queue()
@@ -168,7 +168,11 @@ class ThreadSocksChecker(threading.Thread):
                 version = self.getSocksVersion(proxy[0], proxy[1])
                 if version == 5 or version == 4:
                     print("Working: " + proxy[0], proxy[1])
-                    qout.put(proxy)
+                    a = [proxy[0], proxy[1], 1, 500]
+                    qout.put(a)
+                else:
+                    a = [proxy[0], proxy[1], 0, 0]
+                    qout.put(a)
             except queue.Empty:
                 print(self.index,': quit')
                 break
@@ -216,8 +220,7 @@ class thread_check_one_proxy(threading.Thread):
             active=1
         else:
             active=0
-        if active==1:
-            qout.put([ip,port])
+        qout.put([ip,port, active, timeused])
         print('thread ',(self.index),' ',qout.qsize(),' active:: ',active," ",ip,':',port,'--',int(timeused))
         return
 
@@ -246,6 +249,7 @@ def createProxyListTable():
             "protocol varchar(45), primary key(`idx`))",
             "ALTER TABLE `mypythondb`.`freeproxy` ADD UNIQUE INDEX `index1` (`ip` ASC, `port` ASC)",
             "alter table `mypythondb`.`freeproxy` add column `active` boolean default false",
+            "alter table `mypythondb`.`freeproxy` add column `speed` int default 0",
             "alter table `mypythondb`.`freeproxy` add column `time_added` timestamp",
             "alter table `mypythondb`.`freeproxy` add column `time_verified` timestamp"]
 
@@ -269,8 +273,6 @@ if __name__ == '__main__':
     for (ip, port) in cursor:
         a=[ip, port]
         qproxy.put(a)
-    cursor.close()
-    cnx.close()
 
     threads = []
     tcount = 50
@@ -282,13 +284,19 @@ if __name__ == '__main__':
     for thread in threads:
         thread.start()
 
-    for thread in threads:
-        thread.join(3)
-
     while True:
         try:
-            a = qout.get(False)
-            print(a)
+            a = qout.get(True, 300)
+            update = "update `mypythondb`.`freeproxy` set active="
+            update+= str(a[2])
+            update+= ", speed="
+            update+= str(a[3])
+            update+= ", time_verified=NOW() where ip='"+a[0]+"' and port="+str(a[1])
+            cursor.execute(update)
+            cnx.commit()
         except queue.Empty:
             break
+
+    cursor.close()
+    cnx.close()
     quit(0)
