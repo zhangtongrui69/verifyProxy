@@ -304,4 +304,5 @@ if __name__ == '__main__':
     for thread in threads:
         if thread.is_alive():
             alive+= 1
+    print('living thread: ', alive)
     quit(alive)
