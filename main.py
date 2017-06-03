@@ -21,7 +21,7 @@ target_timeout = 30                   # the response time should be less than ta
                                     # then we consider this is a valid proxy
 
 
-dbpassword='smart247'
+dbpassword='localhost'
 # items in q is a list: ip, port, protocol, country
 qproxy = queue.Queue()
 qout = queue.Queue()
