@@ -24,6 +24,7 @@ target_timeout = 30                   # the response time should be less than ta
 dbpassword='localhost'
 # items in q is a list: ip, port, protocol, country
 qproxy = queue.Queue()
+qsocks = queue.Queue()
 qout = queue.Queue()
 
 baiduIp = '103.235.46.39'
@@ -174,14 +175,15 @@ class ThreadSocksChecker(threading.Thread):
                     a = [proxy[0], proxy[1], 0, 0]
                     qout.put(a)
             except queue.Empty:
-                print(self.index,': quit')
+                print('thread ', self.index,': quit')
                 break
 
 
 class thread_check_one_proxy(threading.Thread):
-    def __init__(self, index):
+    def __init__(self, que, index):
         threading.Thread.__init__(self)
         self.index = index
+        self.q = que
         proxydata = ()
         return
 
@@ -227,7 +229,7 @@ class thread_check_one_proxy(threading.Thread):
     def run(self):
         while True:
             try:
-                proxydata = qproxy.get(False)
+                proxydata = self.q.get(False)
                 self.check_one_proxy(proxydata[0], proxydata[1])
             except queue.Empty:
                 print(self.index,': quit')
@@ -269,16 +271,20 @@ if __name__ == '__main__':
                           host='127.0.0.1',
                           database='mypythondb')
     cursor = cnx.cursor()
-    cursor.execute("select ip, port from `mypythondb`.`freeproxy`")
-    for (ip, port) in cursor:
+    cursor.execute("select ip, port, protocol from `mypythondb`.`freeproxy`")
+    for (ip, port, protocol) in cursor:
         a=[ip, port]
-        qproxy.put(a)
+        if 'sock' in protocol or 'SOCK' in protocol or 'Sock' in protocol:
+            qsocks.put(a)
+        else:
+            qproxy.put(a)
 
+    print('http proxy: ', qproxy.qsize(), ' socks proxy: ', qsocks.qsize())
     threads = []
-    tcount = 50
+    threadcount = 50
 
-    for i in range(tcount):
-        t = thread_check_one_proxy(i)
+    for i in range(threadcount):
+        t = ThreadSocksChecker(qsocks, 500, i)
         threads.insert(i, t)
 
     for thread in threads:
