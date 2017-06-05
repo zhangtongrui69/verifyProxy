@@ -281,10 +281,13 @@ if __name__ == '__main__':
 
     print('http proxy: ', qproxy.qsize(), ' socks proxy: ', qsocks.qsize())
     threads = []
-    threadcount = 50
+    threadcount = 500
 
     for i in range(threadcount):
-        t = ThreadSocksChecker(qsocks, 500, i)
+        if i < 400:
+            t = thread_check_one_proxy(qproxy, i)
+        else:
+            t = ThreadSocksChecker(qsocks, 500, i)
         threads.insert(i, t)
 
     for thread in threads:
