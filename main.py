@@ -20,6 +20,7 @@ target_string = '030173'		# the returned html text should contain this string
 target_timeout = 30                   # the response time should be less than target_timeout seconds
                                     # then we consider this is a valid proxy
 
+threads = []
 
 dbpassword='localhost'
 # items in q is a list: ip, port, protocol, country
@@ -233,6 +234,11 @@ class thread_check_one_proxy(threading.Thread):
                 self.check_one_proxy(proxydata[0], proxydata[1])
             except queue.Empty:
                 print(self.index,': quit')
+                alive = 0
+                for thread in threads:
+                    if thread.is_alive():
+                        alive += 1
+                print('living thread: ', alive)
                 break
             except Exception as ee:
                 print(self.index,': Exception ',ee)
@@ -280,11 +286,10 @@ if __name__ == '__main__':
             qproxy.put(a)
 
     print('http proxy: ', qproxy.qsize(), ' socks proxy: ', qsocks.qsize())
-    threads = []
-    threadcount = 500
+    threadcount = 1000
 
     for i in range(threadcount):
-        if i < 400:
+        if i < threadcount-100:
             t = thread_check_one_proxy(qproxy, i)
         else:
             t = ThreadSocksChecker(qsocks, 500, i)
