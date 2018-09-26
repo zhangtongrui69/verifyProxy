@@ -21,7 +21,7 @@ target_timeout = 30                   # the response time should be less than ta
                                     # then we consider this is a valid proxy
 
 
-dbpassword='tme'
+dbpassword='localhost'
 # items in q is a list: ip, port, protocol, country
 qproxy = queue.Queue()
 qsocks = queue.Queue()
@@ -199,7 +199,7 @@ class thread_check_one_proxy(threading.Thread):
         proxies = {'http':'http://'+proxy+'/'}
         opener = urllib.request.FancyURLopener(proxies)
         opener.addheaders = [
-            ('User-agent', 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)')
+            ('User-agent','Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)')
             ]
         t1=time.time()
 
@@ -281,7 +281,7 @@ if __name__ == '__main__':
 
     print('http proxy: ', qproxy.qsize(), ' socks proxy: ', qsocks.qsize())
     threads = []
-    threadcount = 1
+    threadcount = 500
 
     for i in range(threadcount):
         if i < 400:
